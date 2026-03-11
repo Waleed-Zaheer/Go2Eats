@@ -1,0 +1,102 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  text-decoration: inherit;
+  cursor: pointer;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Enhanced mobile sidebar sliding transitions */
+@keyframes slide-in-from-left-mobile {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-to-left-mobile {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-from-right-mobile {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-to-right-mobile {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Apply smooth sliding animations to mobile sidebar */
+@media (max-width: 1023px) {
+  /* Override Tailwind animations with custom smooth slide for mobile */
+  [data-mobile="true"][data-side="left"][data-state="open"] {
+    animation: slide-in-from-left-mobile 0.3s cubic-bezier(0.32, 0.72, 0, 1)
+      forwards !important;
+  }
+
+  [data-mobile="true"][data-side="left"][data-state="closed"] {
+    animation: slide-out-to-left-mobile 0.3s cubic-bezier(0.32, 0.72, 0, 1)
+      forwards !important;
+  }
+
+  [data-mobile="true"][data-side="right"][data-state="open"] {
+    animation: slide-in-from-right-mobile 0.3s cubic-bezier(0.32, 0.72, 0, 1)
+      forwards !important;
+  }
+
+  [data-mobile="true"][data-side="right"][data-state="closed"] {
+    animation: slide-out-to-right-mobile 0.3s cubic-bezier(0.32, 0.72, 0, 1)
+      forwards !important;
+  }
+}
