@@ -1,73 +1,88 @@
-# React + TypeScript + Vite
+# Go2Eats
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Status: scaffold only — no application code yet.**
+>
+> The toolchain, design system, and fonts are set up and working, but `src/App.tsx` is still
+> placeholder text. Nothing about the product has been built. This README describes what is
+> actually here today rather than an intended product, so it doesn't mislead a future reader
+> (including you, in six months).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## What exists
 
-## React Compiler
+A Vite + React 19 + TypeScript project with a complete shadcn/ui component layer installed
+and a custom font pairing configured. It builds and lints, and the dev server runs — there is
+just no application on top of it yet.
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+| Piece | State |
+| --- | --- |
+| Build toolchain | Vite 7 + React 19 + TypeScript 5.9, SWC Fast Refresh |
+| Styling | Tailwind CSS v4 via `@tailwindcss/vite`, `tw-animate-css` |
+| Component library | **30 shadcn/ui components** installed in `src/components/ui/` |
+| Primitives | Radix UI (`radix-ui` package), `class-variance-authority`, `tailwind-merge` |
+| Icons | `lucide-react` |
+| Theming | `next-themes` (light/dark), `sonner` for toasts |
+| Fonts | Delius and Inconsolata, self-hosted in `src/fonts/` |
+| Linting | ESLint 9 flat config with `typescript-eslint`, react-hooks, react-refresh |
+| Application code | **None.** `App.tsx` renders three lines of placeholder text. |
 
-## Expanding the ESLint configuration
+### Installed components
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+`accordion` `alert` `alert-dialog` `avatar` `badge` `breadcrumb` `button` `card` `checkbox`
+`dialog` `dropdown-menu` `input` `label` `navigation-menu` `scroll-area` `select` `separator`
+`sheet` `sidebar` `skeleton` `slider` `sonner` `spinner` `switch` `table` `tabs` `textarea`
+`toggle` `toggle-group` `tooltip`
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Notably this includes `sidebar` and `navigation-menu`, which suggests an app-shell layout was
+the intended direction.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Architecture
+
+There isn't one yet — and that's the honest answer. What has been *decided* implicitly by the
+dependency choices:
+
+- **Client-only SPA.** Vite with no server, no router, and no data-fetching library installed.
+  Adding routing (`react-router`) and a server or API client are still open decisions.
+- **shadcn/ui conventions.** Components are owned in-repo (`src/components/ui/`) rather than
+  imported from a package, so they're yours to modify. `src/lib/utils.ts` provides the
+  standard `cn()` helper.
+- **No state management, no forms, no validation** libraries are installed yet.
+
+If this becomes a real food-ordering product, the decisions still to make are: routing,
+where the menu/restaurant data comes from, auth, and cart/order state.
+
+---
+
+## Getting started
+
+```bash
+npm install
+npm run dev      # Vite dev server
+npm run build    # tsc -b && vite build
+npm run lint     # eslint
+npm run preview  # preview the production build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+No environment variables and no services are required — see [REQUIRED.md](./REQUIRED.md).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Layout
+
+```text
+Go2Eats/
+├── src/
+│   ├── components/
+│   │   ├── ui/          30 shadcn/ui components
+│   │   └── variants.tsx
+│   ├── fonts/           Delius, Inconsolata (self-hosted)
+│   ├── hooks/use-mobile.ts
+│   ├── lib/utils.ts     cn()
+│   ├── App.tsx          ← placeholder
+│   └── main.tsx
+├── eslint.config.js
+└── vite.config.ts
 ```
