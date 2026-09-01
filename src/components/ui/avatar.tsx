@@ -1,37 +1,120 @@
-"use client"
-
-import * as React from "react"
-import { Avatar as AvatarPrimitive } from "radix-ui"
+/**
+ * Avatar — a user's profile picture with a fallback (initials/icon) shown
+ * while the image loads or if it fails, plus badge/group helpers for
+ * stacking multiple avatars.
+ *
+ * Usage:
+ *   <Avatar>
+ *     <AvatarImage src="/user.png" alt="Jane" />
+ *     <AvatarFallback>JD</AvatarFallback>
+ *   </Avatar>
+ *
+ *   <AvatarGroup>
+ *     <Avatar>...</Avatar>
+ *     <Avatar>...</Avatar>
+ *     <AvatarGroupCount>+3</AvatarGroupCount>
+ *   </AvatarGroup>
+ *
+ * Depends on:
+ *   - src/lib/utils.ts (cn helper)
+ */
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ComponentProps,
+} from "react"
 
 import { cn } from "@/lib/utils"
+
+type ImageLoadingStatus = "idle" | "loading" | "loaded" | "error"
+
+const AvatarContext = createContext<{
+  status: ImageLoadingStatus
+  setStatus: (status: ImageLoadingStatus) => void
+}>({ status: "idle", setStatus: () => {} })
+
+function useImageLoadingStatus(
+  src: string | undefined,
+  referrerPolicy?: React.HTMLAttributeReferrerPolicy
+) {
+  const [status, setStatus] = useState<ImageLoadingStatus>("idle")
+
+  useEffect(() => {
+    if (!src) {
+      setStatus("error")
+      return
+    }
+
+    let cancelled = false
+    setStatus("loading")
+
+    const image = new window.Image()
+    if (referrerPolicy) image.referrerPolicy = referrerPolicy
+    image.onload = () => {
+      if (!cancelled) setStatus("loaded")
+    }
+    image.onerror = () => {
+      if (!cancelled) setStatus("error")
+    }
+    image.src = src
+
+    return () => {
+      cancelled = true
+    }
+  }, [src, referrerPolicy])
+
+  return status
+}
 
 function Avatar({
   className,
   size = "default",
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
+}: ComponentProps<"span"> & {
   size?: "default" | "sm" | "lg"
 }) {
+  const [status, setStatus] = useState<ImageLoadingStatus>("idle")
+
   return (
-    <AvatarPrimitive.Root
-      data-slot="avatar"
-      data-size={size}
-      className={cn(
-        "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
-        className
-      )}
-      {...props}
-    />
+    <AvatarContext.Provider value={{ status, setStatus }}>
+      <span
+        data-slot="avatar"
+        data-size={size}
+        className={cn(
+          "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
+          className
+        )}
+        {...props}
+      />
+    </AvatarContext.Provider>
   )
 }
 
 function AvatarImage({
   className,
+  onLoadingStatusChange,
+  referrerPolicy,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+}: ComponentProps<"img"> & {
+  onLoadingStatusChange?: (status: ImageLoadingStatus) => void
+}) {
+  const { setStatus } = useContext(AvatarContext)
+  const status = useImageLoadingStatus(props.src, referrerPolicy)
+
+  useEffect(() => {
+    setStatus(status)
+    onLoadingStatusChange?.(status)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
+
+  if (status !== "loaded") return null
+
   return (
-    <AvatarPrimitive.Image
+    <img
       data-slot="avatar-image"
+      referrerPolicy={referrerPolicy}
       className={cn(
         "aspect-square size-full rounded-full object-cover",
         className
@@ -43,21 +126,36 @@ function AvatarImage({
 
 function AvatarFallback({
   className,
+  delay,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+}: ComponentProps<"span"> & { delay?: number }) {
+  const { status } = useContext(AvatarContext)
+  const [canRender, setCanRender] = useState(delay === undefined)
+
+  useEffect(() => {
+    if (delay === undefined) return
+    const timer = window.setTimeout(() => setCanRender(true), delay)
+    return () => window.clearTimeout(timer)
+  }, [delay])
+
+  if (status === "loaded" || !canRender) return null
+
   return (
-    <AvatarPrimitive.Fallback
+    <span
       data-slot="avatar-fallback"
       className={cn(
         "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </span>
   )
 }
 
-function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
+function AvatarBadge({ className, ...props }: ComponentProps<"span">) {
   return (
     <span
       data-slot="avatar-badge"
@@ -73,7 +171,7 @@ function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   )
 }
 
-function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
+function AvatarGroup({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="avatar-group"
@@ -86,10 +184,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-function AvatarGroupCount({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function AvatarGroupCount({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       data-slot="avatar-group-count"
