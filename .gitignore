@@ -13,8 +13,6 @@ dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
@@ -29,3 +27,5 @@ temp_interactive_push.bat
 # Local planning docs — not meant for the public repo
 REQUIRED.md
 IMPROVEMENTS.md
+.gitignore
+config.bat
