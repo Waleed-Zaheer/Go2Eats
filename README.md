@@ -1,60 +1,52 @@
-# Go2Eats
+# GotoEats
 
-> **Status: scaffold only — no application code yet.**
->
-> The toolchain, design system, and fonts are set up and working, but `src/App.tsx` is still
-> placeholder text. Nothing about the product has been built. This README describes what is
-> actually here today rather than an intended product, so it doesn't mislead a future reader
-> (including you, in six months).
+A multi-restaurant food delivery marketplace — a customer-facing ordering app plus three
+operator portals (restaurant, rider, admin), all in one Vite + React 19 + TypeScript SPA.
 
----
-
-## What exists
-
-A Vite + React 19 + TypeScript project with a complete shadcn/ui component layer installed
-and a custom font pairing configured. It builds and lints, and the dev server runs — there is
-just no application on top of it yet.
-
-| Piece | State |
-| --- | --- |
-| Build toolchain | Vite 7 + React 19 + TypeScript 5.9, SWC Fast Refresh |
-| Styling | Tailwind CSS v4 via `@tailwindcss/vite`, `tw-animate-css` |
-| Component library | **30 shadcn/ui components** installed in `src/components/ui/` |
-| Primitives | Radix UI (`radix-ui` package), `class-variance-authority`, `tailwind-merge` |
-| Icons | `lucide-react` |
-| Theming | `next-themes` (light/dark), `sonner` for toasts |
-| Fonts | Delius and Inconsolata, self-hosted in `src/fonts/` |
-| Linting | ESLint 9 flat config with `typescript-eslint`, react-hooks, react-refresh |
-| Application code | **None.** `App.tsx` renders three lines of placeholder text. |
-
-### Installed components
-
-`accordion` `alert` `alert-dialog` `avatar` `badge` `breadcrumb` `button` `card` `checkbox`
-`dialog` `dropdown-menu` `input` `label` `navigation-menu` `scroll-area` `select` `separator`
-`sheet` `sidebar` `skeleton` `slider` `sonner` `spinner` `switch` `table` `tabs` `textarea`
-`toggle` `toggle-group` `tooltip`
-
-Notably this includes `sidebar` and `navigation-menu`, which suggests an app-shell layout was
-the intended direction.
+> **Status: fully designed and built as a frontend, on mock data — no backend yet.** Every
+> screen below is real and working. What's missing is a server: there's no database, no auth
+> provider, and no payment processor. State lives in [Zustand](https://zustand.docs.pmnd.rs/)
+> stores backed by `localStorage`, seeded from `src/lib/mock-data.ts`. See
+> [REQUIRED.md](./REQUIRED.md) for what a real backend would need to replace.
 
 ---
 
-## Architecture
+## What's here
 
-There isn't one yet — and that's the honest answer. What has been *decided* implicitly by the
-dependency choices:
+| Area | Routes | What it does |
+| --- | --- | --- |
+| **Customer app** | `/`, `/restaurants`, `/restaurants/:slug`, `/checkout`, `/orders`, `/orders/:id`, `/login`, `/signup`, `/account` | Browse restaurants by cuisine/rating/delivery time, order from a menu, checkout, and track an order through a live status stepper. |
+| **Restaurant portal** | `/restaurant/*` (behind `/restaurant/login`) | Dashboard with today's stats and an incoming-order queue, a drag-and-drop order Kanban board, menu management (add/edit/toggle availability), analytics charts, and restaurant settings. |
+| **Rider portal** | `/rider/*` (behind `/rider/login`) | Go online, accept available deliveries, work an active delivery through pickup → en route → delivered, and view earnings/payout history. |
+| **Admin console** | `/admin/*` (behind `/admin/login`) | Platform-wide GMV/order stats, approve or suspend restaurants and riders, a global order table, and customer management. |
 
-- **Client-only SPA.** Vite with no server, no router, and no data-fetching library installed.
-  Adding routing (`react-router`) and a server or API client are still open decisions.
-- **shadcn/ui conventions.** Components are owned in-repo (`src/components/ui/`) rather than
-  imported from a package, so they're yours to modify. `src/lib/utils.ts` provides the
-  standard `cn()` helper.
-- **No state management, no forms, no validation** libraries are installed yet.
+All four areas are logged in via **demo auth** — the login forms are pre-filled and any
+submission signs you in (as the seeded restaurant/rider, or as a platform admin). There's no
+real password check because there's no backend to check it against.
 
-If this becomes a real food-ordering product, the decisions still to make are: routing,
-where the menu/restaurant data comes from, auth, and cart/order state.
+Placing an order, accepting it in the restaurant portal, picking it up as a rider, and
+approving/suspending a partner in the admin console all operate on the **same shared
+in-memory state** (`src/store/orders-store.ts`, `src/store/partners-store.ts`), so actions in
+one portal are visible in the others in real time within the same browser session.
 
 ---
+
+## Design system
+
+Built entirely on **[my-snippets](../my-snippets)** — this workspace's own hand-written
+component registry (76 accessible components, no Radix, no shadcn package dependency) —
+rather than stock shadcn/ui. See [IMPROVEMENTS.md](./IMPROVEMENTS.md) for why that switch
+was made.
+
+- **Brand**: a warm coral/orange primary (`--primary`) on a soft warm-neutral ground, tuned
+  specifically for GotoEats in `src/index.css` — not a reskin of my-snippets' own gold theme.
+- **Fonts**: Public Sans (body) + Space Grotesk (headings), self-hosted via `@fontsource-variable`.
+- **Illustration**: restaurant/menu imagery is deliberately *not* stock photography — each
+  cuisine gets a distinct gradient + icon treatment (`src/lib/cuisine-art.tsx`) instead, so
+  there's no broken-image risk and the look stays consistent in light and dark mode.
+- **Charts**: the registry's own hand-rolled SVG bar-chart engine (no `recharts`).
+- **Money**: stored as integer cents throughout (`priceCents`, `totalCents`, …), formatted at
+  the edges with `src/lib/format.ts`.
 
 ## Getting started
 
@@ -66,9 +58,14 @@ npm run lint     # eslint
 npm run preview  # preview the production build
 ```
 
-No environment variables and no services are required — see [REQUIRED.md](./REQUIRED.md).
+No environment variables are required — see [REQUIRED.md](./REQUIRED.md).
 
----
+## Deploying
+
+Configured for Vercel: `vercel.json` rewrites every path to `index.html` (this is a
+client-side-routed SPA, so the platform needs to hand every URL to React Router rather than
+404ing on a hard refresh of, say, `/restaurant/orders`). Vercel auto-detects the Vite
+framework preset — no other configuration needed. Connect the repo and deploy.
 
 ## Layout
 
@@ -76,13 +73,22 @@ No environment variables and no services are required — see [REQUIRED.md](./RE
 Go2Eats/
 ├── src/
 │   ├── components/
-│   │   ├── ui/          30 shadcn/ui components
-│   │   └── variants.tsx
-│   ├── fonts/           Delius, Inconsolata (self-hosted)
-│   ├── hooks/use-mobile.ts
-│   ├── lib/utils.ts     cn()
-│   ├── App.tsx          ← placeholder
-│   └── main.tsx
-├── eslint.config.js
+│   │   ├── ui/            components lifted from the my-snippets registry
+│   │   ├── layout/         site header/footer, cart sheet, portal sidebar shell
+│   │   ├── customer/       restaurant card, menu item row
+│   │   └── shared/         stat card, status badges, page header, auth layout
+│   ├── pages/
+│   │   ├── customer/       Home, Restaurants, RestaurantDetail, Checkout, Orders, …
+│   │   ├── restaurant/     Dashboard, Orders (Kanban), Menu, Analytics, Settings
+│   │   ├── rider/          Dashboard, Delivery, Earnings
+│   │   └── admin/          Dashboard, Restaurants, Riders, Orders, Users
+│   ├── store/              cart, orders, partners, session — Zustand + localStorage
+│   ├── lib/
+│   │   ├── mock-data.ts    restaurants, menu items, orders, riders, customers
+│   │   ├── types.ts, format.ts, cuisine-art.tsx
+│   │   └── primitives/     headless hooks behind the ui/ components (focus trap, etc.)
+│   ├── App.tsx             route tree
+│   └── index.css           design tokens + custom Tailwind v4 variants
+├── vercel.json
 └── vite.config.ts
 ```
